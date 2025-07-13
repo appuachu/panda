@@ -1,49 +1,124 @@
 #!/bin/bash
 
-# Exit on any error
-set -e
+# Exit on any error and show commands being executed
+set -exo pipefail
 
 echo "🔧 Setting up your custom vulnerable Linux environment..."
 
-# Install build tools for vsftpd backdoor
-echo "📥 Installing vulnerable vsftpd 2.3.4 backdoor..."
-apt update && apt install -y build-essential libpam0g-dev git
-git clone https://github.com/DoctorKisow/vsftpd-2.3.4.git /tmp/vsftpd-backdoor
-cd /tmp/vsftpd-backdoor
-chmod +x vsf_findlibs.sh
-make || echo "⚠️ Make failed - check if pam is linked properly"
-install -v -m 755 vsftpd /usr/sbin/vsftpd
-install -v -m 644 vsftpd.conf /etc/vsftpd.conf
-systemctl restart vsftpd
+# Install essential packages first
+echo "📦 Installing essential packages..."
+apt-get update && apt-get install -y \
+    build-essential \
+    libpam0g-dev \
+    git \
+    vsftpd \
+    openssh-server \
+    iptables \
+    gcc \
+    make \
+    net-tools
 
-# Configure FTP root directory
+# Configure vsftpd backdoor
+echo "📥 Setting up vulnerable vsftpd..."
+if [ ! -d "/tmp/vsftpd-backdoor" ]; then
+    git clone https://github.com/DoctorKisow/vsftpd-2.3.4.git /tmp/vsftpd-backdoor
+    cd /tmp/vsftpd-backdoor
+    chmod +x vsf_findlibs.sh
+    make || { echo "⚠️ Make failed - attempting to continue with system vsftpd"; apt-get install -y vsftpd; }
+    if [ -f "vsftpd" ]; then
+        mv /usr/sbin/vsftpd /usr/sbin/vsftpd.original
+        cp vsftpd /usr/sbin/vsftpd
+        cp vsftpd.conf /etc/
+    fi
+fi
+
+# Configure FTP
+echo "📁 Setting up FTP environment..."
 mkdir -p /var/ftp
-echo "This ftp will not work. Instead of trying another way. flag must be in /root/flag_found.txt" > /var/ftp/flag.txt
+echo "Looking for flags? Try harder! The real flag is hidden elsewhere." > /var/ftp/readme.txt
+chown nobody:nogroup /var/ftp
+chmod a-w /var/ftp
 
-# Enable SSH and create user
-echo "🔐 Setting up SSH..."
-systemctl enable ssh
-systemctl start ssh
-useradd -m admin1
-echo "admin1:hacked123" | chpasswd
+# Setup SSH with weak credentials
+echo "🔐 Configuring SSH with vulnerable settings..."
+useradd -m -s /bin/bash admin1
+echo "admin1:password123" | chpasswd
+sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+echo "root:toor" | chpasswd
+systemctl restart ssh
 
-# Create flag for metasploit
-echo "Username for SSH is: admin1" > /root/flag_found.txt
+# Create flags
+echo "🏴 Creating flag files..."
+echo "flag{metasploit_was_here}" > /root/flag_found.txt
+chmod 600 /root/flag_found.txt
+
+mkdir -p /home/admin1/.hidden/.treasure
+echo "flag{real_flag_hidden_here}" > /home/admin1/.hidden/.treasure/real_flag.txt
+chown -R admin1:admin1 /home/admin1/.hidden
+chmod -R 700 /home/admin1/.hidden
 
 # Create fake root trap
-echo "fakeroot:x:0:0:Fake Root:/root:/bin/bash" >> /etc/passwd
-echo -e '#!/bin/bash\necho "You thought you reset the root password, huh? Try hacking, not cheating."\nexit' > /bin/bash
-chmod +x /bin/bash
+echo "🚧 Setting up root traps..."
+echo '#!/bin/bash
+if [[ $EUID -ne 0 ]]; then
+    echo "Access denied. Try becoming root first."
+    exit 1
+fi
 
-# Setup IPTables to hide ports unless -Pn is used
-echo "🔒 Configuring IPTables to hide ports unless -Pn used..."
-iptables -A INPUT -p tcp --syn -j DROP
+if [[ "$PWD" != "/root" ]]; then
+    echo "To navigate directories, you must solve the riddle:"
+    echo "What has keys but can't open locks?"
+    read -p "Answer: " answer
+    if [[ "$answer" != "keyboard" ]]; then
+        echo "Wrong! Staying in current directory."
+        cd ~
+    fi
+fi
+
+# Execute real bash if all checks pass
+/bin/bash.real "$@"' > /bin/bash.trap
+chmod +x /bin/bash.trap
+
+# Backup real bash and replace
+mv /bin/bash /bin/bash.real
+mv /bin/bash.trap /bin/bash
+
+# Setup iptables to hide ports initially
+echo "🔒 Configuring IPTables..."
+iptables -F
 iptables -A INPUT -p tcp --dport 21 -j ACCEPT
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+iptables -A INPUT -p tcp --syn -j DROP
+iptables-save > /etc/iptables.rules
 
-# Create hidden flag for smart attackers
-mkdir -p /home/admin1/.hidden_flag
-echo "Congrats! You made it here without metasploit." > /home/admin1/.hidden_flag/flag.txt
-chown -R admin1:admin1 /home/admin1/.hidden_flag
+# Make iptables persistent
+echo "iptables-restore < /etc/iptables.rules" >> /etc/rc.local
+chmod +x /etc/rc.local
 
-echo "✅ Setup complete! Reboot your machine for all changes to apply."
+# Protect against single user mode bypass
+echo "🛡️ Hardening against bootloader attacks..."
+if ! grep -q "restrict" /etc/default/grub; then
+    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=""/GRUB_CMDLINE_LINUX_DEFAULT="restrict"/' /etc/default/grub
+    update-grub
+fi
+
+# Create a fake emergency shell that looks like root
+echo '#!/bin/bash
+echo -n "Enter root password: "
+read -s password
+echo
+if [[ "$password" != "superhardpassword123!" ]]; then
+    echo "Access denied. All actions logged."
+    logger "Unauthorized emergency shell access attempted"
+    sleep 5
+    exit 1
+fi
+exec /bin/bash.real' > /bin/emergency-shell
+chmod +x /bin/emergency-shell
+
+# Replace normal emergency shell with our trapped version
+mv /bin/emergency-shell /bin/emergency-shell.real
+mv /bin/emergency-shell /bin/emergency-shell
+
+echo "✅ Setup complete! System will now reboot..."
+reboot
