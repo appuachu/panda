@@ -1,5 +1,5 @@
-# Creating a setup.sh script content as described by the user
-setup_script = """#!/bin/bash
+# Updating the script to use "admin1" consistently as the username instead of "admin"
+setup_script_updated = """#!/bin/bash
 
 # Exit on any error
 set -e
@@ -37,11 +37,11 @@ systemctl restart vsftpd
 echo "🔐 Setting up SSH..."
 systemctl enable ssh
 systemctl start ssh
-useradd -m admin
-echo "admin:hacker123" | chpasswd
+useradd -m admin1
+echo "admin1:hacked123" | chpasswd
 
 # Create FTP exploit flag
-echo "Username for SSH is: admin" > /root/flag_found.txt
+echo "Username for SSH is: admin1" > /root/flag_found.txt
 
 # Create fake root user trap
 echo "fakeroot:x:0:0:Fake Root:/root:/bin/bash" >> /etc/passwd
@@ -55,16 +55,16 @@ iptables -A INPUT -p tcp --dport 21 -j ACCEPT
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 
 # Create hidden flag for real hackers
-mkdir -p /home/admin/.hidden_flag
-echo "Congrats! You made it here without metasploit." > /home/admin/.hidden_flag/flag.txt
-chown -R admin:admin /home/admin/.hidden_flag
+mkdir -p /home/admin1/.hidden_flag
+echo "Congrats! You made it here without metasploit." > /home/admin1/.hidden_flag/flag.txt
+chown -R admin1:admin1 /home/admin1/.hidden_flag
 
 echo "✅ Setup complete! Reboot your machine for all changes to apply."
 """
 
-# Save script to a .sh file
-script_path = "/mnt/data/setup.sh"
-with open(script_path, "w") as f:
-    f.write(setup_script)
+# Save updated script
+script_path_updated = "/mnt/data/setup_admin1.sh"
+with open(script_path_updated, "w") as f:
+    f.write(setup_script_updated)
 
-script_path
+script_path_updated
