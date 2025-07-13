@@ -42,7 +42,7 @@ chmod a-w /var/ftp
 # Setup SSH with weak credentials
 echo "🔐 Configuring SSH with vulnerable settings..."
 useradd -m -s /bin/bash admin1
-echo "admin1:password123" | chpasswd
+echo "admin1:hacked123" | chpasswd
 sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 echo "root:toor" | chpasswd
 systemctl restart ssh
