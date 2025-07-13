@@ -36,7 +36,7 @@ fi
 # Configure FTP
 echo "📁 Setting up FTP environment..."
 mkdir -p /var/ftp
-echo "Looking for flags? Try harder! The real flag is hidden elsewhere." > /var/ftp/readme.txt
+echo "Looking for flags? Try harder! The real flag is hidden elsewhere.superhardpassword123!" > /var/ftp/readme.txt
 chown nobody:nogroup /var/ftp
 chmod a-w /var/ftp
 
