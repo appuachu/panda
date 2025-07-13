@@ -5,14 +5,6 @@ set -e
 
 echo "🔧 Setting up your custom vulnerable Linux environment..."
 
-# Disable apt
-echo "⛔ Disabling apt..."
-if [ -f /usr/bin/apt ]; then
-    mv /usr/bin/apt /usr/bin/_apt_backup
-    chmod 000 /usr/bin/_apt_backup
-    echo -e '#!/bin/bash\necho "apt is disabled. Try hacking instead."' > /usr/bin/apt
-    chmod +x /usr/bin/apt
-fi
 
 # Remove dpkg and snap
 rm -f /usr/bin/dpkg /usr/bin/snap || true
