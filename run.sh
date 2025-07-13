@@ -35,14 +35,14 @@ fi
 # Configure FTP
 echo "📁 Setting up FTP environment..."
 mkdir -p /var/ftp
-echo "Looking for flags? Try harder! The real flag is hidden elsewhere." > /var/ftp/readme.txt
+echo "Looking for flags? Try harder! The real flag is hidden elsewhere. maybe user must admin1,2,3,4,5 passwrod must superhardpassword123!" > /var/ftp/readme.txt
 chown nobody:nogroup /var/ftp
 chmod a-w /var/ftp
 
 # Setup SSH with weak credentials
 echo "🔐 Configuring SSH with vulnerable settings..."
-useradd -m -s /bin/bash admin2
-echo "admin2:hacked123" | chpasswd
+useradd -m -s /bin/bash admin3
+echo "admin3:hacked123" | chpasswd
 sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 echo "root:toor" | chpasswd
 systemctl restart ssh
@@ -52,10 +52,10 @@ echo "🏴 Creating flag files..."
 echo "flag{metasploit_was_here}" > /root/flag_found.txt
 chmod 600 /root/flag_found.txt
 
-mkdir -p /home/admin2/.hidden/.treasure
-echo "flag{real_flag_hidden_here}" > /home/admin2/.hidden/.treasure/real_flag.txt
-chown -R admin2:admin2 /home/admin2/.hidden
-chmod -R 700 /home/admin2/.hidden
+mkdir -p /home/admin3/.hidden/.treasure
+echo "flag{real_flag_hidden_here}" > /home/admin3/.hidden/.treasure/real_flag.txt
+chown -R admin3:admin3 /home/admin3/.hidden
+chmod -R 700 /home/admin3/.hidden
 
 # Create fake root trap
 echo "🚧 Setting up root traps..."
@@ -106,7 +106,8 @@ if ! grep -q "restrict" /etc/default/grub; then
 fi
 
 # Create a fake emergency shell that looks like root
-cat > /bin/emergency-shell <<'EOF'
+echo "🛑 Creating emergency shell trap..."
+cat > /tmp/emergency-shell <<'EOF'
 #!/bin/bash
 echo -n "Enter root password: "
 read -s password
@@ -120,11 +121,13 @@ fi
 exec /bin/bash.real
 EOF
 
-chmod +x /bin/emergency-shell
+chmod +x /tmp/emergency-shell
 
 # Replace normal emergency shell with our trapped version
-[ -f /bin/emergency-shell.real ] || mv /bin/emergency-shell /bin/emergency-shell.real
-mv /bin/emergency-shell /bin/emergency-shell
+if [ -f /bin/emergency-shell ]; then
+    mv /bin/emergency-shell /bin/emergency-shell.real
+fi
+mv /tmp/emergency-shell /bin/emergency-shell
 
 echo "✅ Setup complete! System will now reboot..."
 reboot
