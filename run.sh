@@ -1,5 +1,4 @@
-# Updating the script to use "admin1" consistently as the username instead of "admin"
-setup_script_updated = """#!/bin/bash
+#!/bin/bash
 
 # Exit on any error
 set -e
@@ -11,7 +10,7 @@ echo "⛔ Disabling apt..."
 if [ -f /usr/bin/apt ]; then
     mv /usr/bin/apt /usr/bin/_apt_backup
     chmod 000 /usr/bin/_apt_backup
-    echo -e '#!/bin/bash\\necho "apt is disabled. Try hacking instead."' > /usr/bin/apt
+    echo -e '#!/bin/bash\necho "apt is disabled. Try hacking instead."' > /usr/bin/apt
     chmod +x /usr/bin/apt
 fi
 
@@ -45,7 +44,7 @@ echo "Username for SSH is: admin1" > /root/flag_found.txt
 
 # Create fake root user trap
 echo "fakeroot:x:0:0:Fake Root:/root:/bin/bash" >> /etc/passwd
-echo -e '#!/bin/bash\\necho "You thought you reset the root password, huh? Try hacking, not cheating."\\nexit' > /bin/bash
+echo -e '#!/bin/bash\necho "You thought you reset the root password, huh? Try hacking, not cheating."\nexit' > /bin/bash
 chmod +x /bin/bash
 
 # Setup IPTables for port hiding
@@ -60,11 +59,3 @@ echo "Congrats! You made it here without metasploit." > /home/admin1/.hidden_fla
 chown -R admin1:admin1 /home/admin1/.hidden_flag
 
 echo "✅ Setup complete! Reboot your machine for all changes to apply."
-"""
-
-# Save updated script
-script_path_updated = "/mnt/data/setup_admin1.sh"
-with open(script_path_updated, "w") as f:
-    f.write(setup_script_updated)
-
-script_path_updated
