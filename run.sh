@@ -41,8 +41,8 @@ chmod a-w /var/ftp
 
 # Setup SSH with weak credentials
 echo "🔐 Configuring SSH with vulnerable settings..."
-useradd -m -s /bin/bash admin1
-echo "admin1:hacked123" | chpasswd
+useradd -m -s /bin/bash admin
+echo "admin:hacked123" | chpasswd
 sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 echo "root:toor" | chpasswd
 systemctl restart ssh
@@ -52,10 +52,10 @@ echo "🏴 Creating flag files..."
 echo "flag{metasploit_was_here}" > /root/flag_found.txt
 chmod 600 /root/flag_found.txt
 
-mkdir -p /home/admin1/.hidden/.treasure
-echo "flag{real_flag_hidden_here}" > /home/admin1/.hidden/.treasure/real_flag.txt
-chown -R admin1:admin1 /home/admin1/.hidden
-chmod -R 700 /home/admin1/.hidden
+mkdir -p /home/admin/.hidden/.treasure
+echo "flag{real_flag_hidden_here}" > /home/admin/.hidden/.treasure/real_flag.txt
+chown -R admin:admin /home/admin/.hidden
+chmod -R 700 /home/admin/.hidden
 
 # Create fake root trap
 echo "🚧 Setting up root traps..."
