@@ -1,14 +1,5 @@
 #!/bin/bash
 
-# Get the real path of the script and exit if called via symlink
-SCRIPT_PATH=$(realpath -e "$0")
-SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
-if [ -L "$0" ]; then
-    echo "Error: Please execute the real script directly, not through a symbolic link" >&2
-    echo "Real path: $SCRIPT_PATH" >&2
-    exit 1
-fi
-
 # Exit on any error and show commands being executed
 set -exo pipefail
 
@@ -26,41 +17,36 @@ apt-get update && apt-get install -y \
     gcc \
     make \
     net-tools \
-    realpath
+    sudo
 
 # Configure vsftpd backdoor
 echo "📥 Setting up vulnerable vsftpd..."
 if [ ! -d "/tmp/vsftpd-backdoor" ]; then
     git clone https://github.com/DoctorKisow/vsftpd-2.3.4.git /tmp/vsftpd-backdoor
-    cd /tmp/vsftpd-backdoor || exit 1
+    cd /tmp/vsftpd-backdoor
     chmod +x vsf_findlibs.sh
-    if ! make; then
-        echo "⚠️ Make failed - attempting to continue with system vsftpd"
-        apt-get install -y vsftpd
-    else
-        if [ -f "vsftpd" ]; then
-            mv /usr/sbin/vsftpd /usr/sbin/vsftpd.original
-            cp vsftpd /usr/sbin/vsftpd
-            cp vsftpd.conf /etc/
-        fi
+    make || { echo "⚠️ Make failed - attempting to continue with system vsftpd"; apt-get install -y vsftpd; }
+    if [ -f "vsftpd" ]; then
+        mv /usr/sbin/vsftpd /usr/sbin/vsftpd.original
+        cp vsftpd /usr/sbin/vsftpd
+        cp vsftpd.conf /etc/
     fi
 fi
 
 # Configure FTP
 echo "📁 Setting up FTP environment..."
 mkdir -p /var/ftp
-echo "Looking for flags? Try harder! The real flag is hidden elsewhere. maybe user must admin1,2,3,4,5 password must superhardpassword123!" > /var/ftp/readme.txt
+echo "Looking for flags? Try harder! The real flag is hidden elsewhere." > /var/ftp/readme.txt
 chown nobody:nogroup /var/ftp
 chmod a-w /var/ftp
 
 # Setup SSH with weak credentials
 echo "🔐 Configuring SSH with vulnerable settings..."
-if ! id admin4 &>/dev/null; then
-    useradd -m -s /bin/bash admin4
-fi
-echo "admin4:hacked123" | chpasswd
-sed -i 's/#PermitRootLogin prohibit-ssh/PermitRootLogin yes/' /etc/ssh/sshd_config
+useradd -m -s /bin/bash admin5
+echo "admin5:hacked123" | chpasswd
+sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 echo "root:toor" | chpasswd
+echo "admin5 ALL=(ALL:ALL) ALL" >> /etc/sudoers
 systemctl restart ssh
 
 # Create flags
@@ -68,21 +54,26 @@ echo "🏴 Creating flag files..."
 echo "flag{metasploit_was_here}" > /root/flag_found.txt
 chmod 600 /root/flag_found.txt
 
-mkdir -p /home/admin4/.hidden/.treasure
-echo "flag{real_flag_hidden_here}" > /home/admin4/.hidden/.treasure/real_flag.txt
-chown -R admin4:admin4 /home/admin4/.hidden
-chmod -R 700 /home/admin4/.hidden
+mkdir -p /home/admin5/.hidden/.treasure
+echo "flag{real_flag_hidden_here}" > /home/admin5/.hidden/.treasure/real_flag.txt
+chown -R admin5:admin5 /home/admin5/.hidden
+chmod -R 700 /home/admin5/.hidden
 
-# Create fake root trap
-echo "🚧 Setting up root traps..."
-cat > /tmp/bash.trap <<'EOF'
-#!/bin/bash
+# Create SAFE bash trap that won't cause recursion
+echo "🚧 Setting up SAFE root traps..."
+cat > /bin/bash.trap <<'EOF'
+#!/bin/bash.real
 if [[ $EUID -ne 0 ]]; then
+    # Allow sudo commands to pass through
+    if [[ "$1" == "-c" ]]; then
+        exec /bin/bash.real "$@"
+    fi
+    
     echo "Access denied. Try becoming root first."
     exit 1
 fi
 
-if [[ "$PWD" != "/root" ]]; then
+if [[ "$PWD" != "/root" && "$0" != "-bash" ]]; then
     echo "To navigate directories, you must solve the riddle:"
     echo "What has keys but can't open locks?"
     read -p "Answer: " answer
@@ -92,41 +83,32 @@ if [[ "$PWD" != "/root" ]]; then
     fi
 fi
 
-# Execute real bash if all checks pass
+# Execute normally if all checks pass
 exec /bin/bash.real "$@"
 EOF
 
-chmod +x /tmp/bash.trap
+chmod +x /bin/bash.trap
 
-# Backup real bash and replace
+# Backup real bash and replace SAFELY
 if [ ! -f /bin/bash.real ]; then
     cp /bin/bash /bin/bash.real
-    mv /tmp/bash.trap /bin/bash
 fi
+mv /bin/bash.trap /bin/bash
 
-# Setup iptables to hide ports initially
+# Setup iptables
 echo "🔒 Configuring IPTables..."
 iptables -F
 iptables -A INPUT -p tcp --dport 21 -j ACCEPT
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 iptables -A INPUT -p tcp --syn -j DROP
 iptables-save > /etc/iptables.rules
-
-# Make iptables persistent
 echo "iptables-restore < /etc/iptables.rules" >> /etc/rc.local
 chmod +x /etc/rc.local
 
-# Protect against single user mode bypass
-echo "🛡️ Hardening against bootloader attacks..."
-if ! grep -q "restrict" /etc/default/grub; then
-    sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=""/GRUB_CMDLINE_LINUX_DEFAULT="restrict"/' /etc/default/grub
-    update-grub
-fi
-
-# Create a fake emergency shell that looks like root
-echo "🛑 Creating emergency shell trap..."
+# Create emergency shell trap
+echo "🛑 Creating emergency shell..."
 cat > /tmp/emergency-shell <<'EOF'
-#!/bin/bash
+#!/bin/bash.real
 echo -n "Enter root password: "
 read -s password
 echo
@@ -140,14 +122,8 @@ exec /bin/bash.real
 EOF
 
 chmod +x /tmp/emergency-shell
-
-# Replace normal emergency shell with our trapped version
-if [ ! -f /bin/emergency-shell.real ]; then
-    if [ -f /bin/emergency-shell ]; then
-        mv /bin/emergency-shell /bin/emergency-shell.real
-    fi
-    mv /tmp/emergency-shell /bin/emergency-shell
-fi
+[ -f /bin/emergency-shell ] && mv /bin/emergency-shell /bin/emergency-shell.real
+mv /tmp/emergency-shell /bin/emergency-shell
 
 echo "✅ Setup complete! System will now reboot..."
 reboot
