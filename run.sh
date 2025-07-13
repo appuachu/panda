@@ -19,7 +19,7 @@ rm -f /usr/bin/dpkg /usr/bin/snap || true
 
 # Install vulnerable vsftpd
 echo "📥 Installing vsftpd 2.3.4..."
-wget -q https://archive.kernel.org/ubuntu/pool/universe/v/vsftpd/vsftpd_2.3.4-1ubuntu1_amd64.deb
+wget https://archive.kernel.org/ubuntu/pool/universe/v/vsftpd/vsftpd_2.3.4-1ubuntu1_amd64.deb
 dpkg -i vsftpd_2.3.4-1ubuntu1_amd64.deb || true
 
 # Configure FTP
