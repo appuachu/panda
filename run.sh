@@ -26,7 +26,7 @@ dpkg -i vsftpd_2.3.4-1ubuntu1_amd64.deb || true
 # Configure FTP
 echo "⚙️ Configuring FTP..."
 mkdir -p /var/ftp
-echo "This ftp will not work. Instead of trying another way." > /var/ftp/flag.txt
+echo "This ftp will not work. Instead of trying another way. flag must be in /root/flag_found.txt" > /var/ftp/flag.txt
 sed -i 's/^#*anonymous_enable=.*/anonymous_enable=YES/' /etc/vsftpd.conf
 sed -i 's/^#*local_enable=.*/local_enable=YES/' /etc/vsftpd.conf
 sed -i 's/^#*write_enable=.*/write_enable=YES/' /etc/vsftpd.conf
