@@ -59,7 +59,8 @@ chmod -R 700 /home/admin/.hidden
 
 # Create fake root trap
 echo "🚧 Setting up root traps..."
-echo '#!/bin/bash
+cat > /bin/bash.trap <<'EOF'
+#!/bin/bash
 if [[ $EUID -ne 0 ]]; then
     echo "Access denied. Try becoming root first."
     exit 1
@@ -76,11 +77,13 @@ if [[ "$PWD" != "/root" ]]; then
 fi
 
 # Execute real bash if all checks pass
-/bin/bash.real "$@"' > /bin/bash.trap
+exec /bin/bash.real "$@"
+EOF
+
 chmod +x /bin/bash.trap
 
 # Backup real bash and replace
-mv /bin/bash /bin/bash.real
+[ -f /bin/bash.real ] || mv /bin/bash /bin/bash.real
 mv /bin/bash.trap /bin/bash
 
 # Setup iptables to hide ports initially
@@ -103,7 +106,8 @@ if ! grep -q "restrict" /etc/default/grub; then
 fi
 
 # Create a fake emergency shell that looks like root
-echo '#!/bin/bash
+cat > /bin/emergency-shell <<'EOF'
+#!/bin/bash
 echo -n "Enter root password: "
 read -s password
 echo
@@ -113,11 +117,13 @@ if [[ "$password" != "superhardpassword123!" ]]; then
     sleep 5
     exit 1
 fi
-exec /bin/bash.real' > /bin/emergency-shell
+exec /bin/bash.real
+EOF
+
 chmod +x /bin/emergency-shell
 
 # Replace normal emergency shell with our trapped version
-mv /bin/emergency-shell /bin/emergency-shell.real
+[ -f /bin/emergency-shell.real ] || mv /bin/emergency-shell /bin/emergency-shell.real
 mv /bin/emergency-shell /bin/emergency-shell
 
 echo "✅ Setup complete! System will now reboot..."
