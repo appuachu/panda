@@ -1,8 +1,0 @@
-Password is = JNFEWRKDKEZTGTKKKNDU2WKMJFGVUVCYI4ZFIRKPLJNFOVK2KRBU6TSUI5ITERCXJ5HDEV2RG5FDKSCVHU6T2PJ5HU======
-
-🔐 Hint 1:
-"Sometimes secrets wear two masks — once you lift the first, the real face still lies hidden beneath."
-The password seems familiar... but don’t stop at the first reveal. Think: layers of disguise. You may have seen it before, but twice is nice.
-
-🔐 Hint 2:
-"The format looks like base32... and maybe that's not a coincidence. What if it’s base32 in disguise twice? Look again."
