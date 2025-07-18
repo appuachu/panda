@@ -1,9 +1,5 @@
-Challenge: The Hidden Pathway
+Clue / Hint:
+🔐 "Look beyond the bars... decode_wifi will whisper the key."
 
-You've extracted the password from the flag.txt, but entry requires both a username and password.
 
-HINTS:
-1. "The password is already in your hands"
-2. "Only injections can leak identity"
-3. "Use the password from flag.txt to login"
-4. "Username? Well... that's a matter for discovery"
+U2FsdGVkX18Q6W3fGCQ/K1k2m3s4Npl1Oa/EMhEF9fI5SvLsSeN2DKpszPrkyZsKcdXNJytcPcFUEOnoTQ9hBGnVxwoZ51kqMepCSjVchnW9qUSaypkt44fmBWCx+Lp27t6qzAkluuswZHpox151eg==
