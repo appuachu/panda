@@ -1,0 +1,18 @@
+=======================fake apk ========================
+/flag_login
+
+Flag:RTAC{dum_8888} --- Find the 🧩Hint where it leads you to next.
+
+🧩Hint 1:
+When the doors seem closed, sometimes the path lies Try flag_login
+
+=====================================real apk ================================
+
+🧩 Hint 1:
+Many will knock, few will be heard. Only the silent method, that seeks no body, shall pass.
+
+🧠 There are nine doors to the truth, but only one will open. The rest will mislead you. Only the one in your HEAD will reveal what’s hidden — quietly, without asking, without saying. The silent seeker finds the flag.
+
+👉 But this truth only unveils itself when you reach the forgotten path:
+ dasamoolam_damu
+Only there will the silence speak.
